@@ -79,6 +79,17 @@ function App() {
     })
   }
 
+  async function removePost(){
+    await firebase.firestore().collection('posts')
+    .doc(idPost)
+    .delete()
+    .then(()=>{
+      alert("Livro excluído da lista!")
+    })
+    .catch((error) => {
+      console.log("Gerou erro na exclusao:" + error)
+    })
+  }
   return (
     <div>
       <h1>ReactJS + Firebase</h1>
@@ -96,6 +107,7 @@ function App() {
         <button onClick={ handleAdd }>Cadastrar</button>
         <button onClick={ buscarPost }>Buscar</button>
         <button onClick={ atualizaPost }>Atualizar</button>
+        <button onClick={ removePost }>Remover</button>
       </div>
 
       <ul>

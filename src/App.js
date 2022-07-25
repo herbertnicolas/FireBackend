@@ -8,7 +8,26 @@ function App() {
   const [ posts, setPosts] = useState([]);
   const [ idPost, setIdPost ] = useState('')
   //useEffect para caso quiser atualizar em tempo real
-  
+  useEffect(() => {
+    async function loadPosts(){
+      
+      await firebase.firestore().collection('posts')
+      .onSnapshot((doc) =>{
+        let listaPosts = [];
+     
+        doc.forEach((item) => {
+          listaPosts.push({
+            id: item.id,
+            autor: item.data().autor,
+            titulo: item.data().titulo
+          })
+        })
+        setPosts(listaPosts)
+      })
+    }
+    loadPosts();
+  }, []);
+
   async function handleAdd(){
     await firebase.firestore().collection('posts')
     // caso for pra inserir nova key gerada automaticamente:

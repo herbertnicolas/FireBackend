@@ -2,130 +2,123 @@ import firebase from "./firebaseConnection";
 import './style.css'; 
 import {useState , useEffect} from 'react';
 
-function App() {
-  const [ titulo, setTitulo ] = useState('');
-  const [ autor, setAutor ] = useState('');
-  const [ posts, setPosts] = useState([]);
-  const [ idPost, setIdPost ] = useState('')
-  //useEffect para caso quiser atualizar em tempo real
-  useEffect(() => {
-    async function loadPosts(){
+function App(){
+  const [ idUser , setIdUser ] = useState('')
+  const [ nome, setNome ] = useState('')
+  const [ idade, setIdade ] = useState('')
+  const [ users, setLista ] = useState([])
+
+  const [ email, setEmail ] = useState('')
+  const [ senha, setSenha ] = useState('')
+
+  useEffect(()=>{
+    async function loadLista(){
       
-      await firebase.firestore().collection('posts')
-      .onSnapshot((doc) =>{
-        let listaPosts = [];
-     
+      await firebase.firestore().collection('users')
+      .onSnapshot((doc)=>{
+        let lista = [];
         doc.forEach((item) => {
-          listaPosts.push({
+          lista.push({
             id: item.id,
-            autor: item.data().autor,
-            titulo: item.data().titulo
+            nome: item.data().nome,
+            idade: item.data().idade
           })
         })
-        setPosts(listaPosts)
+        setLista(lista);
       })
     }
-    loadPosts();
-  }, []);
+    loadLista();
+  },[])
 
-  async function handleAdd(){
-    await firebase.firestore().collection('posts')
-    // caso for pra inserir nova key gerada automaticamente:
-    // .add({
-    //   titulo: titulo,
-    //   autor: autor,
-    // })
-    .add({
-      titulo: titulo,
-      autor: autor
-    })
+  async function cadastrarUser(){
+    await firebase.auth().createUserWithEmailAndPassword( email , senha )
     .then(() => {
-      console.log("DADOS CADASTRADOS COM SUCESSO!");
-      setTitulo('');
-      setAutor('');
+      console.log("USUARIO CADASTRADO COM SUCESSO!")
     })
     .catch((error) => {
-      console.log("Gerou erro:" + error)
+      console.log("Erro no cadastro: " + error)
     })
   }
 
+  async function listarUsers(){
+    let lista = [];
 
-  async function buscarPost(){
-    await firebase.firestore().collection('posts')
+    await firebase.firestore().collection('users')
     .get()
     .then((snapshot) => {
-      let lista = []
-
       snapshot.forEach((doc) => {
         lista.push({
           id: doc.id,
-          autor: doc.data().autor,
-          titulo: doc.data().titulo
+          nome: doc.data().nome,
+          idade: doc.data().idade
         })
       })
-      setPosts(lista)
+      setLista(lista);
     })
     .catch((error) => {
-      console.log("Gerou erro no busca:" + error)
+      console.log("Gerou um erro no listarUsers()! " + error)
     })
   }
 
-  async function atualizaPost(){
-    await firebase.firestore().collection('posts')
-    .doc(idPost)
+  async function atualizarUser(){
+    await firebase.firestore().collection('users')
+    .doc(idUser)
     .update({
-      autor: autor,
-      titulo: titulo
+      nome: nome,
+      idade: idade
+    })
+    .then(() => {
+      console.log("Usuário atualizado com sucesso!")
+    })
+    .catch((error) => {
+      console.log("Gerou erro no atualizarUser()! " + error)
     })
   }
 
-  async function removePost(){
-    await firebase.firestore().collection('posts')
-    .doc(idPost)
+  async function removerUser(id){
+    await firebase.firestore().collection('users')
+    .doc(id)
     .delete()
-    .then(()=>{
-      alert("Livro excluído da lista!")
-    })
-    .catch((error) => {
-      console.log("Gerou erro na exclusao:" + error)
-    })
+    .then(() => alert('Item removido com sucesso!'))
+    .catch((error) => console.log("Gerou erro na remoção! " + error))
   }
-  return (
+  return(
     <div>
-      <h1>ReactJS + Firebase</h1>
-      
       <div className="container">
+        <h1>ReactJS + Firebase</h1>
+        <label>Email: </label>
+        <input type="text" value={ email } onChange={(e) => {setEmail(e.target.value)}}/>
+        <label>Senha: </label>
+        <input type="password" value={ senha } onChange={(e) => setSenha(e.target.value)}/>
+        <button onClick={cadastrarUser}>Cadastrar</button>
+        <hr/>
         <label>ID: </label>
-        <input type="text" value={idPost} onChange={(e) => setIdPost(e.target.value)}/>
+        <input type="text" value={idUser} onChange={(e) => setIdUser(e.target.value)}/> <br/>
         
-        <label>Título: </label>
-        <textarea className="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)}/>
+        <label>Nome: </label>
+        <input type="text" value={nome} onChange={(e) => setNome(e.target.value)}/> <br/>
         
-        <label>Autor: </label>
-        <input className="autor" value={autor} onChange={(e) => setAutor(e.target.value)}/>
-        
-        <button onClick={ handleAdd }>Cadastrar</button>
-        <button onClick={ buscarPost }>Buscar</button>
-        <button onClick={ atualizaPost }>Atualizar</button>
-        <button onClick={ removePost }>Remover</button>
+        <label>Idade: </label>
+        <input type="text" value={idade} onChange={(e) => setIdade(e.target.value)}/> <br/>
+
+        <button onClick={listarUsers}>Listar</button>
+        <button onClick={atualizarUser}>Atualizar</button>
+        <button onClick={removerUser}>Remover</button>
       </div>
 
       <ul>
-        {posts.map((item)=>{
+        {users.map((item) => {
           return(
             <li key={item.id}>
-              <span>ID: {item.id}</span> <br/>
-              <span>Autor: {item.autor}</span> <br/>
-              <span>Titulo: {item.titulo}</span> <br/>
-              <br/>
-            </li>
+              <span>Nome: {item.nome}</span>
+              <span>Idade: {item.idade}</span>
+              <button onClick={() => removerUser(item.id)}>Excluir usuário</button>
+            </li>  
           )
         })}
       </ul>
     </div>
   )
+  
 }
-
 export default App;
-
-
